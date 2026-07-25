@@ -1,4 +1,4 @@
-import errorFoundImage from "../assets/Allura - Error Found.png";
+import noSessionIllustration from "../assets/no-session-illustration.svg";
 
 /**
  * Ported from the old build's Lk component. Rendered when the current URL's
@@ -33,7 +33,7 @@ export default function SubmissionLockedState({ reason = "missing" }) {
     <div className="session-empty-shell">
       <div className="session-empty-card">
         <div className="session-empty-illustration">
-          <img src={errorFoundImage} alt="Session not found illustration" />
+          <img src={noSessionIllustration} alt="Session not found illustration" />
         </div>
         <div className="session-empty-copy">
           <p className="session-empty-kicker">Transcript Access</p>
