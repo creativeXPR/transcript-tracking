@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" fill="none" role="img" aria-label="Documents being reviewed">
+  <rect x="46" y="34" width="112" height="140" rx="10" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="2"/>
+  <rect x="60" y="52" width="70" height="8" rx="4" fill="#818cf8"/>
+  <rect x="60" y="70" width="84" height="6" rx="3" fill="#c7d2fe"/>
+  <rect x="60" y="82" width="74" height="6" rx="3" fill="#c7d2fe"/>
+  <rect x="60" y="94" width="80" height="6" rx="3" fill="#c7d2fe"/>
+  <circle cx="70" cy="120" r="4" fill="#6366f1"/>
+  <rect x="82" y="117" width="52" height="6" rx="3" fill="#c7d2fe"/>
+  <circle cx="70" cy="136" r="4" fill="#6366f1"/>
+  <rect x="82" y="133" width="60" height="6" rx="3" fill="#c7d2fe"/>
+  <circle cx="70" cy="152" r="4" fill="#6366f1"/>
+  <rect x="82" y="149" width="46" height="6" rx="3" fill="#c7d2fe"/>
+  <circle cx="170" cy="118" r="34" fill="#fff" stroke="#4f46e5" stroke-width="6"/>
+  <line x1="196" y1="144" x2="220" y2="172" stroke="#4f46e5" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="170" cy="118" r="20" fill="#eef2ff" opacity="0.7"/>
+</svg>
