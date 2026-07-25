@@ -1,9 +1,10 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useSessionAccess } from "../../context/SessionAccessContext";
 import { useToast } from "../../context/ToastContext";
 import { CUSTOM_REASON_SENTINEL, INVALID_REASONS } from "../../utils/adminConstants";
+import StudentExportMenu from "./StudentExportMenu";
 
 export default function AdminStudentCard({ student, onUpdateStatus, allowedCategories }) {
   const [expanded, setExpanded] = useState(false);
@@ -56,7 +57,7 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
   }
 
   return (
-    <div className="panel accordion-card" style={{ overflow: "hidden", marginBottom: 10 }}>
+    <div className="panel accordion-card" style={{ overflow: "visible", marginBottom: 10 }}>
       <div className="accordion-head" onClick={() => setExpanded((v) => !v)} style={{ cursor: "pointer" }}>
         <div className="student-info">
           <div className="student-icon">
@@ -94,6 +95,7 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <StudentExportMenu student={student} />
           <div
             className={`status-badge ${
               isReady ? "status-ready" : isInvalid ? "status-invalid" : "status-pending"

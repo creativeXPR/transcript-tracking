@@ -108,14 +108,17 @@ export default function AdminDashboardView() {
     }
   }
 
-  async function disableSession(id) {
+  async function toggleSessionDisable(id, currentDisable) {
+    const nextState = !currentDisable;
     try {
-      await updateDoc(doc(db, "sessions", id), { disable: true });
-      setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, disable: true } : s)));
-      toast.info("Session disabled.");
+      await updateDoc(doc(db, "sessions", id), { disable: nextState });
+      setSessions((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, disable: nextState } : s))
+      );
+      toast.info(nextState ? `Session "${id}" disabled.` : `Session "${id}" enabled.`);
     } catch (err) {
       console.error(err);
-      toast.error("Could not disable the session.");
+      toast.error(`Could not ${nextState ? "disable" : "enable"} session.`);
     }
   }
 
@@ -226,7 +229,7 @@ export default function AdminDashboardView() {
             {sessionsOpen && (
               <div className="session-list-panel">
                 <div className="session-list-meta">
-                  Manage session links and disable access without adding realtime listeners.
+                  Manage session links and toggle student access on or off in real time.
                 </div>
                 <div className="session-list-actions-row">
                   <button
@@ -245,10 +248,28 @@ export default function AdminDashboardView() {
                   {sessions.map((s) => (
                     <div key={s.id} className="session-item">
                       <div>
-                        <div className="session-item-title">{s.id}</div>
+                        <div
+                          className="session-item-title"
+                          style={{ display: "flex", alignItems: "center", gap: 8 }}
+                        >
+                          <span>{s.id}</span>
+                          <span
+                            style={{
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              padding: "2px 8px",
+                              borderRadius: "99px",
+                              textTransform: "uppercase",
+                              background: s.disable ? "#fef2f2" : "#f0fdf4",
+                              color: s.disable ? "#dc2626" : "#16a34a",
+                              border: `1px solid ${s.disable ? "#fecaca" : "#bbf7d0"}`,
+                            }}
+                          >
+                            {s.disable ? "Disabled" : "Active"}
+                          </span>
+                        </div>
                         <div className="session-item-subtitle">
-                          {s.disable ? "Disabled" : "Active"}
-                          {s.createdAt ? ` • ${new Date(s.createdAt).toLocaleString()}` : ""}
+                          {s.createdAt ? `Created ${new Date(s.createdAt).toLocaleString()}` : ""}
                         </div>
                       </div>
                       <div className="session-item-actions">
@@ -269,10 +290,14 @@ export default function AdminDashboardView() {
                         <button
                           type="button"
                           className="btn-compact"
-                          onClick={() => disableSession(s.id)}
-                          disabled={!!s.disable}
+                          style={
+                            s.disable
+                              ? { background: "#16a34a", borderColor: "#16a34a", color: "#fff" }
+                              : { borderColor: "#ef4444", color: "#ef4444" }
+                          }
+                          onClick={() => toggleSessionDisable(s.id, !!s.disable)}
                         >
-                          {s.disable ? "Disabled" : "Disable"}
+                          {s.disable ? "Enable Session" : "Disable Session"}
                         </button>
                       </div>
                     </div>

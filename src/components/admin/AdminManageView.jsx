@@ -11,6 +11,8 @@ export default function AdminManageView({ allowedCategories }) {
   const toast = useToast();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const load = useCallback(async () => {
     if (!activeSessionCollection) return;
@@ -55,6 +57,33 @@ export default function AdminManageView({ allowedCategories }) {
     }
   }
 
+  const filteredStudents = students.filter((s) => {
+    if (statusFilter !== "all") {
+      const sStatus = (s.status || "Pending Verification").toLowerCase();
+      if (statusFilter === "pending verification") {
+        if (!sStatus.includes("pending")) return false;
+      } else if (statusFilter === "under verification") {
+        if (!sStatus.includes("under verification")) return false;
+      } else if (statusFilter === "ready") {
+        if (!sStatus.includes("ready")) return false;
+      } else if (statusFilter === "invalid") {
+        if (!sStatus.includes("invalid")) return false;
+      } else if (sStatus !== statusFilter) {
+        return false;
+      }
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const nameMatch = s.name?.toLowerCase().includes(q);
+      const emailMatch = s.email?.toLowerCase().includes(q);
+      const matricMatch = s.matricNo?.toLowerCase().includes(q);
+      if (!nameMatch && !emailMatch && !matricMatch) return false;
+    }
+    return true;
+  });
+
+  const hasActiveFilters = searchQuery.trim() !== "" || statusFilter !== "all";
+
   return (
     <div className="panel panel-surface">
       <div className="panel-header">
@@ -68,14 +97,81 @@ export default function AdminManageView({ allowedCategories }) {
           <button className="btn" onClick={load} disabled={loading}>
             {loading ? "Refreshing..." : "Refresh"}
           </button>
-          <EmailCompiler students={students} />
+          <EmailCompiler students={filteredStudents} />
         </div>
       </div>
+
+      <div className="filter-bar">
+        <div className="search-box">
+          <svg
+            className="search-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            className="filter-search-input"
+            placeholder="Search by name, email, or matric number..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="search-clear-btn"
+              onClick={() => setSearchQuery("")}
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        <select
+          className="filter-status-select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All Status</option>
+          <option value="pending verification">Pending Verification</option>
+          <option value="under verification">Under Verification</option>
+          <option value="ready">Ready</option>
+          <option value="invalid">Invalid</option>
+        </select>
+      </div>
+
       <div className="panel-list">
-        {students.length === 0 && (
+        {students.length === 0 && !loading && (
           <div className="empty-state">No submissions found for this session.</div>
         )}
-        {students.map((s) => (
+        {students.length > 0 && filteredStudents.length === 0 && (
+          <div className="empty-state" style={{ textAlign: "center", padding: "2rem" }}>
+            <p style={{ margin: "0 0 10px", color: "var(--text-muted)" }}>
+              No submissions match your search query or status filter.
+            </p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                className="btn-compact"
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                }}
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        )}
+        {filteredStudents.map((s) => (
           <AdminStudentCard
             key={s.id}
             student={s}
