@@ -8,6 +8,7 @@ import { auth } from "../firebase";
 import { useSessionAccess } from "../context/SessionAccessContext";
 import { useStudentFlow } from "../context/StudentFlowContext";
 import { useToast } from "../context/ToastContext";
+import { useModal } from "../context/ModalContext";
 
 /* Shown when the student already submitted for this category in this session */
 function AlreadySubmittedCard({ dashboardHref }) {
@@ -49,6 +50,7 @@ export default function StudentFormPage() {
   const navigate = useNavigate();
   const { search } = useLocation();
   const toast = useToast();
+  const modal = useModal();
 
   const category = new URLSearchParams(search).get("request") === "clearance" ? "clearance" : "transcript";
 
@@ -85,32 +87,40 @@ export default function StudentFormPage() {
   useEffect(() => {
     if (!isSignInWithEmailLink(auth, window.location.href)) return;
     let cancelled = false;
-    let email = window.localStorage.getItem("emailForSignIn");
-    if (!email) {
-      email = window.prompt(
-        "Please provide your email for confirmation (you opened this link on a different device):"
-      );
-    }
-    if (!email) {
-      setCompletingLink(false);
-      return;
-    }
-    completePasswordlessSignIn(email, window.location.href)
-      .then(() => {
+
+    (async () => {
+      let email = window.localStorage.getItem("emailForSignIn");
+      if (!email) {
+        email = await modal.promptInput({
+          title: "Confirm your email",
+          message:
+            "You opened this sign-in link on a different device. Enter the email address you used to request it so we can complete sign-in.",
+          label: "Email address",
+          placeholder: "you@example.com",
+          inputType: "email",
+          confirmLabel: "Sign in",
+        });
+      }
+      if (cancelled) return;
+      if (!email) {
+        setCompletingLink(false);
+        return;
+      }
+      try {
+        await completePasswordlessSignIn(email, window.location.href);
         if (cancelled) return;
         window.localStorage.removeItem("emailForSignIn");
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error(err);
         toast.error("This sign-in link is invalid or has expired.");
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setCompletingLink(false);
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [completePasswordlessSignIn, toast]);
+  }, [completePasswordlessSignIn, modal, toast]);
 
   const onSubmitSuccess = async () => {
     await reloadSubmission();

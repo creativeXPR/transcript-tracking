@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useToast } from "../context/ToastContext";
+import { useModal } from "../context/ModalContext";
 
 const DETAIL_FIELDS = [
   { label: "Full Name", key: "name" },
@@ -31,6 +32,7 @@ export default function SubmissionCard({
   const [sendingRequest, setSendingRequest] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
+  const modal = useModal();
 
   const status = submission?.status || "Pending Review";
   const isReady = String(status).toLowerCase().includes("ready");
@@ -67,7 +69,14 @@ export default function SubmissionCard({
   }
 
   async function handleReapplyAfterApproval() {
-    if (!window.confirm(`Delete this ${categoryLabel} submission and re-apply?`)) return;
+    const ok = await modal.confirm({
+      title: `Re-apply for ${categoryLabel}`,
+      message: `This will delete your current ${categoryLabel} submission so you can start a new one. This cannot be undone.`,
+      confirmLabel: "Delete & re-apply",
+      cancelLabel: "Keep submission",
+      tone: "danger",
+    });
+    if (!ok) return;
     setDeleting(true);
     try {
       await deleteDoc(doc(db, `session_${sessionKey}`, `${user.uid}_${submission.category}`));

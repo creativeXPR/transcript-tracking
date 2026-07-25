@@ -14,6 +14,7 @@ import { db } from "../../firebase";
 import { useSessionAccess } from "../../context/SessionAccessContext";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { useToast } from "../../context/ToastContext";
+import { useModal } from "../../context/ModalContext";
 
 const INITIAL_METRICS = {
   applied: "—",
@@ -27,6 +28,7 @@ export default function AdminDashboardView() {
   const { allowedCategories, adminRole } = useAdminAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  const modal = useModal();
 
   const [newSessionKey, setNewSessionKey] = useState("");
   const [creating, setCreating] = useState(false);
@@ -97,8 +99,12 @@ export default function AdminDashboardView() {
       toast.success("Session link copied.");
     } catch (err) {
       console.error(err);
-      toast.warning("Clipboard access failed. Use the manual copy prompt.");
-      prompt("Copy this session link:", link);
+      toast.warning("Clipboard access failed. Copy the link manually below.");
+      await modal.showCopyable({
+        title: "Copy session link",
+        message: "Select all and copy this link to share with students.",
+        text: link,
+      });
     }
   }
 
