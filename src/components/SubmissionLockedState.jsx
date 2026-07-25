@@ -1,28 +1,29 @@
-/**
- * Rendered when the current URL's ?session= param resolves to an unusable state.
- * Copy is driven by the `reason` from SessionAccessContext.
- */
+import errorFoundImage from "../assets/Allura - Error Found.png";
 
+/**
+ * Ported from the old build's Lk component. Rendered when the current URL's
+ * ?session= param resolves to an unusable state; copy is driven by the reason
+ * from SessionAccessContext.
+ */
 const REASONS = {
   missing: {
-    title: "No session selected",
+    title: "Session link required",
     description:
-      "This link is missing a session key. Ask the department for the current application link and try again.",
+      "This application page needs a valid session key in the URL before it can continue.",
   },
   "not-found": {
     title: "Session not found",
-    description:
-      "We could not find the session on this link. It may have been removed or the link may be mistyped.",
+    description: "The session in the link does not exist in the sessions collection.",
   },
   disabled: {
-    title: "Session closed",
+    title: "Session disabled",
     description:
-      "Applications for this session are no longer accepted. Watch out for the next application cycle.",
+      "This session was disabled by an administrator and can no longer accept submissions.",
   },
   error: {
-    title: "Something went wrong",
+    title: "Session unavailable",
     description:
-      "We could not verify your session. Please check your connection and refresh the page.",
+      "The session could not be verified right now. Please try again or contact the administrator.",
   },
 };
 
@@ -31,10 +32,21 @@ export default function SubmissionLockedState({ reason = "missing" }) {
   return (
     <div className="session-empty-shell">
       <div className="session-empty-card">
+        <div className="session-empty-illustration">
+          <img src={errorFoundImage} alt="Session not found illustration" />
+        </div>
         <div className="session-empty-copy">
-          <p className="session-empty-kicker">Access</p>
+          <p className="session-empty-kicker">Transcript Access</p>
           <h1>{copy.title}</h1>
           <p>{copy.description}</p>
+        </div>
+        <div className="session-empty-footer">
+          <div className="session-empty-footer-title">Need help?</div>
+          <div className="session-empty-footer-copy">
+            Contact the transcript support desk at{" "}
+            <strong>support@transcript-tracking.app</strong> or call{" "}
+            <strong>+234 800 000 0000</strong>.
+          </div>
         </div>
       </div>
     </div>
