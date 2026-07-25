@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { collection, doc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { useSessionAccess } from "../../context/SessionAccessContext";
 import { useToast } from "../../context/ToastContext";
 
 const CATEGORY_COLOR = { transcript: "#0ea5e9", clearance: "#7c3aed" };
 
 export default function AdminRequestsView({ allowedCategories }) {
   const toast = useToast();
+  const { activeSessionCollection } = useSessionAccess();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -16,21 +18,47 @@ export default function AdminRequestsView({ allowedCategories }) {
       const snap = await getDocs(
         query(collection(db, "requests"), orderBy("requestedAt", "desc"))
       );
-      const rows = snap.docs
+      const rawRows = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .filter(
           (r) =>
             r.status === "pending" &&
             (!allowedCategories || allowedCategories.includes(r.category))
         );
-      setRequests(rows);
+
+      const resolvedRows = await Promise.all(
+        rawRows.map(async (r) => {
+          if (!r.name || !r.email || !r.matricNo) {
+            const sessionCol = r.sessionCollection || activeSessionCollection;
+            if (sessionCol) {
+              try {
+                const subSnap = await getDoc(doc(db, sessionCol, r.id));
+                if (subSnap.exists()) {
+                  const sData = subSnap.data();
+                  return {
+                    ...r,
+                    name: r.name || sData.name || "",
+                    email: r.email || sData.email || "",
+                    matricNo: r.matricNo || sData.matricNo || "",
+                  };
+                }
+              } catch {
+                // fallback silently
+              }
+            }
+          }
+          return r;
+        })
+      );
+
+      setRequests(resolvedRows);
     } catch (err) {
       console.error(err);
       toast.error("Could not load requests.");
     } finally {
       setLoading(false);
     }
-  }, [allowedCategories, toast]);
+  }, [allowedCategories, activeSessionCollection, toast]);
 
   useEffect(() => {
     load();
@@ -75,6 +103,8 @@ export default function AdminRequestsView({ allowedCategories }) {
         {requests.map((r) => {
           const label = r.category === "clearance" ? "Clearance" : "Transcript";
           const color = CATEGORY_COLOR[r.category] || CATEGORY_COLOR.transcript;
+          const studentName = r.name || "Student Re-apply Request";
+
           return (
             <div
               key={r.id}
@@ -95,10 +125,11 @@ export default function AdminRequestsView({ allowedCategories }) {
                   justifyContent: "space-between",
                   alignItems: "flex-start",
                   gap: 12,
+                  flexWrap: "wrap",
                 }}
               >
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0, flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span
                       style={{
                         background: color + "18",
@@ -109,16 +140,43 @@ export default function AdminRequestsView({ allowedCategories }) {
                         padding: "2px 8px",
                         borderRadius: "99px",
                         textTransform: "uppercase",
+                        flexShrink: 0,
                       }}
                     >
                       {label}
                     </span>
-                    <span style={{ fontWeight: 600 }}>Re-apply Request</span>
+                    <span style={{ fontWeight: 700, fontSize: "0.96rem", color: "var(--text-main)" }}>
+                      {studentName}
+                    </span>
                   </div>
-                  <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                    UID: {r.authUid}
-                  </span>
+
+                  <div
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "var(--text-muted)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px 12px",
+                      flexWrap: "wrap",
+                      marginTop: 2,
+                    }}
+                  >
+                    {r.matricNo && (
+                      <span>
+                        <strong>Matric No:</strong> {r.matricNo}
+                      </span>
+                    )}
+                    {r.email && (
+                      <span>
+                        <strong>Email:</strong> {r.email}
+                      </span>
+                    )}
+                    <span style={{ opacity: 0.8, fontSize: "0.76rem" }}>
+                      UID: {r.authUid}
+                    </span>
+                  </div>
                 </div>
+
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                   <button
                     className="btn-compact btn-compact-primary"
@@ -135,6 +193,7 @@ export default function AdminRequestsView({ allowedCategories }) {
                   </button>
                 </div>
               </div>
+
               <div
                 style={{
                   padding: "8px 12px",
@@ -147,12 +206,14 @@ export default function AdminRequestsView({ allowedCategories }) {
                   <strong>Reason for invalidity:</strong> {r.reason}
                 </span>
               </div>
+
               <div
                 style={{
                   fontSize: "0.78rem",
                   color: "var(--text-muted)",
                   display: "flex",
                   gap: 16,
+                  flexWrap: "wrap",
                 }}
               >
                 {r.flaggedAt && <span>Flagged: {new Date(r.flaggedAt).toLocaleString()}</span>}

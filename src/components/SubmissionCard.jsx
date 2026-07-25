@@ -51,6 +51,9 @@ export default function SubmissionCard({
         doc(db, "requests", `${user.uid}_${submission.category}`),
         {
           authUid: user.uid,
+          name: submission.name || user.displayName || "",
+          email: submission.email || user.email || "",
+          matricNo: submission.matricNo || "",
           category: submission.category,
           reason: submission.invalidReason || reapplyRequest?.reason || "",
           status: "pending",

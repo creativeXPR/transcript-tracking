@@ -1414,19 +1414,21 @@ nav { align-items: center; gap: 12px; margin-left: auto; display: flex; }
 }
 
 
-/* Submissions Filter Bar */
+/* Submissions Filter Bar & Responsiveness */
 .filter-bar {
   display: flex;
   align-items: center;
   gap: 12px;
   margin: 14px 0 18px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .search-box {
   position: relative;
   flex: 1;
-  min-width: 240px;
+  min-width: 200px;
+  max-width: 100%;
   display: flex;
   align-items: center;
 }
@@ -1450,6 +1452,7 @@ nav { align-items: center; gap: 12px; margin-left: auto; display: flex; }
   outline: none;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
 }
 
 .filter-search-input:focus {
@@ -1495,12 +1498,98 @@ nav { align-items: center; gap: 12px; margin-left: auto; display: flex; }
   cursor: pointer;
   outline: none;
   min-width: 140px;
+  max-width: 100%;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
 }
 
 .filter-status-select:focus {
   border-color: var(--primary-strong);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
+
+.accordion-head-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.student-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.student-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Mobile responsive constraints */
+@media (max-width: 640px) {
+  .admin-main {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  .admin-pane {
+    padding: 12px;
+  }
+  .panel-surface {
+    padding: 12px;
+  }
+  .panel-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .section-toolbar {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .search-box {
+    width: 100%;
+    min-width: 0;
+  }
+  .filter-status-select {
+    width: 100%;
+    min-width: 0;
+  }
+  .accordion-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .student-info {
+    width: 100%;
+  }
+  .accordion-head-actions {
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px dashed var(--border);
+    padding-top: 8px;
+  }
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .student-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-card-actions {
+    width: 100%;
+  }
+  .student-card-actions button {
+    width: 100%;
+  }
+}
+
 

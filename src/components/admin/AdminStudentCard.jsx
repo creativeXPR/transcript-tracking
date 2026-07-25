@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useSessionAccess } from "../../context/SessionAccessContext";
@@ -37,6 +37,9 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
       });
       await setDoc(doc(db, "requests", student.id), {
         authUid: student.authUid,
+        name: student.name || "",
+        email: student.email || "",
+        matricNo: student.matricNo || "",
         category: student.category ?? "transcript",
         reason,
         status: "flagged",
@@ -68,11 +71,11 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
               />
             </svg>
           </div>
-          <div>
+          <div style={{ minWidth: 0, overflow: "hidden" }}>
             <div className="student-name">{student.name || student.email}</div>
             <div
               className="student-email"
-              style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}
+              style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", wordBreak: "break-all" }}
             >
               <span
                 style={{
@@ -84,6 +87,7 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
                   padding: "1px 7px",
                   borderRadius: "99px",
                   textTransform: "uppercase",
+                  flexShrink: 0,
                 }}
               >
                 {categoryLabel}
@@ -94,8 +98,8 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                    <StudentExportMenu student={student} />
+        <div className="accordion-head-actions">
+          <StudentExportMenu student={student} />
           <div
             className={`status-badge ${
               isReady ? "status-ready" : isInvalid ? "status-invalid" : "status-pending"
@@ -103,7 +107,7 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
           >
             {status}
           </div>
-          <div style={{ fontSize: 20, color: "var(--text-muted)" }}>{expanded ? "−" : "+"}</div>
+          <div style={{ fontSize: 20, color: "var(--text-muted)", flexShrink: 0 }}>{expanded ? "−" : "+"}</div>
         </div>
       </div>
 
@@ -111,7 +115,7 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
         <div className="accordion-body">
           <div className="detail-grid">
             <div className="detail-stack" style={{ fontSize: "0.82rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <div className="student-detail-grid">
                 <div>
                   <strong>Category:</strong>{" "}
                   <span style={{ textTransform: "capitalize" }}>{student.category || "transcript"}</span>
@@ -149,7 +153,7 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
               </div>
             </div>
             {canAct && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="student-card-actions">
                 <button
                   className="btn"
                   onClick={() => onUpdateStatus(student.id, "Under Verification")}
