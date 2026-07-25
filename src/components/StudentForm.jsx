@@ -233,7 +233,7 @@ export default function StudentForm({ onSuccess, onUpdateStudent, submissionCate
 
       <div className="student-field">
         <label className="student-field-label" htmlFor="email">
-          Student Email
+          Email
         </label>
         <input
           id="email"
