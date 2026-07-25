@@ -44,8 +44,8 @@ export default function SubmissionLockedState({ reason = "missing" }) {
           <div className="session-empty-footer-title">Need help?</div>
           <div className="session-empty-footer-copy">
             Contact the transcript support desk at{" "}
-            <strong>support@transcript-tracking.app</strong> or call{" "}
-            <strong>+234 800 000 0000</strong>.
+            <strong>abioye.oluwafemi19@gmail.com</strong> or call{" "}
+            <strong>+234 915 185 7488</strong>.
           </div>
         </div>
       </div>

@@ -162,14 +162,14 @@ export default function StudentDashboardPage() {
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <a
-              href="mailto:admissions@example.com"
+              href="mailto:abioye.oluwafemi19@gmail.com"
               className="btn"
               style={{ textDecoration: "none", display: "flex", justifyContent: "center" }}
             >
               Email Support
             </a>
             <a
-              href="tel:+1234567890"
+              href="tel:+2349151857488"
               className="btn"
               style={{ textDecoration: "none", display: "flex", justifyContent: "center" }}
             >
