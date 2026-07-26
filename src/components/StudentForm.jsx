@@ -51,7 +51,7 @@ function validate(student, file) {
   if (!student.surname.trim()) errors.surname = "Surname is required.";
   if (!student.firstName.trim()) errors.firstName = "First name is required.";
   if (!student.matricNo.trim()) errors.matricNo = "Matriculation number is required.";
-  if (!EMAIL_RE.test(student.email.trim())) errors.email = "Enter a valid student email.";
+  if (!EMAIL_RE.test(student.email.trim())) errors.email = "Enter a valid email.";
   if (!student.academicSession) errors.academicSession = "Select an academic session.";
   if (!student.yearOfEntry.trim()) errors.yearOfEntry = "Year of entry is required.";
   if (!student.yearOfGraduation.trim()) errors.yearOfGraduation = "Year of graduation is required.";

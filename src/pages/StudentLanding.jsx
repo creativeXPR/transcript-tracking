@@ -91,7 +91,7 @@ function PaymentModal({ category, onClose }) {
           Enter your <strong>active phone number</strong>.
         </Step>
         <Step n={9} title="Payer email">
-          Use your <strong>student email</strong> — the same one you'll use to sign in here.
+          Use your <strong>Email</strong> — the same one you'll use to sign in here.
         </Step>
         <Step n={10} title="Next step">
           Once you have your <strong>Remita Receipt</strong> — you can proceed to the next step.
