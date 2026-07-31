@@ -237,7 +237,7 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
             </div>
           )}
 
-          <div style={{ marginTop: 14 }}>
+          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
             <a
               className="link-action"
               href={student.receiptUrl || "#"}
@@ -246,6 +246,16 @@ export default function AdminStudentCard({ student, onUpdateStatus, allowedCateg
             >
               View uploaded receipt
             </a>
+            {student.certificateUrl && (
+              <a
+                className="link-action"
+                href={student.certificateUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View certificate / statement of result
+              </a>
+            )}
           </div>
         </div>
       )}

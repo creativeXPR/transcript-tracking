@@ -223,28 +223,49 @@ export default function SubmissionCard({
             )}
           </div>
 
-          {submission?.receiptUrl && (
+          {(submission?.receiptUrl || submission?.certificateUrl) && (
             <div
               style={{
                 marginTop: "1.1rem",
                 paddingTop: "1rem",
                 borderTop: "1px solid var(--border-light)",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.6rem",
               }}
             >
-              <a
-                href={submission.receiptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn"
-                style={{
-                  fontSize: "0.82rem",
-                  display: "inline-flex",
-                  gap: "6px",
-                  alignItems: "center",
-                }}
-              >
-                📄 View Uploaded Receipt
-              </a>
+              {submission?.receiptUrl && (
+                <a
+                  href={submission.receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn"
+                  style={{
+                    fontSize: "0.82rem",
+                    display: "inline-flex",
+                    gap: "6px",
+                    alignItems: "center",
+                  }}
+                >
+                  📄 View Uploaded Receipt
+                </a>
+              )}
+              {submission?.certificateUrl && (
+                <a
+                  href={submission.certificateUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn"
+                  style={{
+                    fontSize: "0.82rem",
+                    display: "inline-flex",
+                    gap: "6px",
+                    alignItems: "center",
+                  }}
+                >
+                  🎓 View Certificate / Statement of Result
+                </a>
+              )}
             </div>
           )}
 

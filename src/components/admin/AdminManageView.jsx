@@ -6,6 +6,23 @@ import { useToast } from "../../context/ToastContext";
 import AdminStudentCard from "./AdminStudentCard";
 import EmailCompiler from "./EmailCompiler";
 
+const STATUS_RANK = {
+  ready: 1,
+  pending: 2,
+  "pending verification": 2,
+  "under verification": 3,
+  invalid: 4,
+};
+
+function getStatusRank(statusStr) {
+  const s = (statusStr || "pending").toLowerCase().trim();
+  if (s.includes("ready")) return 1;
+  if (s.includes("under verification")) return 3;
+  if (s.includes("invalid")) return 4;
+  if (s.includes("pending")) return 2;
+  return STATUS_RANK[s] || 2;
+}
+
 export default function AdminManageView({ allowedCategories }) {
   const { activeSessionCollection } = useSessionAccess();
   const toast = useToast();
@@ -13,6 +30,7 @@ export default function AdminManageView({ allowedCategories }) {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("date-desc");
 
   const load = useCallback(async () => {
     if (!activeSessionCollection) return;
@@ -82,7 +100,38 @@ export default function AdminManageView({ allowedCategories }) {
     return true;
   });
 
-  const hasActiveFilters = searchQuery.trim() !== "" || statusFilter !== "all";
+  const sortedStudents = [...filteredStudents].sort((a, b) => {
+    if (sortBy === "date-desc") {
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tb - ta;
+    }
+    if (sortBy === "date-asc") {
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return ta - tb;
+    }
+    if (sortBy === "status-asc") {
+      const ra = getStatusRank(a.status);
+      const rb = getStatusRank(b.status);
+      if (ra !== rb) return ra - rb;
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tb - ta;
+    }
+    if (sortBy === "status-desc") {
+      const ra = getStatusRank(a.status);
+      const rb = getStatusRank(b.status);
+      if (ra !== rb) return rb - ra;
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tb - ta;
+    }
+    return 0;
+  });
+
+  const hasActiveFilters =
+    searchQuery.trim() !== "" || statusFilter !== "all" || sortBy !== "date-desc";
 
   return (
     <div className="panel panel-surface">
@@ -97,7 +146,7 @@ export default function AdminManageView({ allowedCategories }) {
           <button className="btn" onClick={load} disabled={loading}>
             {loading ? "Refreshing..." : "Refresh"}
           </button>
-          <EmailCompiler students={filteredStudents} />
+          <EmailCompiler students={sortedStudents} />
         </div>
       </div>
 
@@ -135,24 +184,39 @@ export default function AdminManageView({ allowedCategories }) {
             </button>
           )}
         </div>
-        <select
-          className="filter-status-select"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="all">All Status</option>
-          <option value="pending verification">Pending Verification</option>
-          <option value="under verification">Under Verification</option>
-          <option value="ready">Ready</option>
-          <option value="invalid">Invalid</option>
-        </select>
+        <div className="filter-controls-group">
+          <select
+            className="filter-status-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter by status"
+          >
+            <option value="all">All Status</option>
+            <option value="pending verification">Pending Verification</option>
+            <option value="under verification">Under Verification</option>
+            <option value="ready">Ready</option>
+            <option value="invalid">Invalid</option>
+          </select>
+
+          <select
+            className="filter-sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            aria-label="Sort submissions by"
+          >
+            <option value="date-desc">Date: Newest First</option>
+            <option value="date-asc">Date: Oldest First</option>
+            <option value="status-asc">Status: Ready → Invalid</option>
+            <option value="status-desc">Status: Invalid → Ready</option>
+          </select>
+        </div>
       </div>
 
       <div className="panel-list">
         {students.length === 0 && !loading && (
           <div className="empty-state">No submissions found for this session.</div>
         )}
-        {students.length > 0 && filteredStudents.length === 0 && (
+        {students.length > 0 && sortedStudents.length === 0 && (
           <div className="empty-state" style={{ textAlign: "center", padding: "2rem" }}>
             <p style={{ margin: "0 0 10px", color: "var(--text-muted)" }}>
               No submissions match your search query or status filter.
@@ -164,14 +228,15 @@ export default function AdminManageView({ allowedCategories }) {
                 onClick={() => {
                   setSearchQuery("");
                   setStatusFilter("all");
+                  setSortBy("date-desc");
                 }}
               >
-                Clear Filters
+                Clear Filters &amp; Sorting
               </button>
             )}
           </div>
         )}
-        {filteredStudents.map((s) => (
+        {sortedStudents.map((s) => (
           <AdminStudentCard
             key={s.id}
             student={s}

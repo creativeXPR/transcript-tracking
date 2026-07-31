@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
 import { doc, setDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -29,7 +29,7 @@ const COMPRESSION_OPTIONS = {
  * Fills the seven checklist groups the side-panel reads.
  * These names match the keys the wrapper page holds in state.
  */
-function checklistFromForm(student, file) {
+function checklistFromForm(student, file, certFile, isTranscript) {
   return {
     nameFilled: !!(student.surname.trim() && student.firstName.trim()),
     matricFilled: !!student.matricNo.trim(),
@@ -43,6 +43,7 @@ function checklistFromForm(student, file) {
     programmeFilled: !!(student.programme && student.projectSupervisor.trim()),
     emailFilled: EMAIL_RE.test((student.email || "").trim()),
     receiptFilled: !!file,
+    certificateFilled: !isTranscript || !!certFile,
   };
 }
 
@@ -96,14 +97,26 @@ function validate(student, file) {
   return errors;
 }
 
+function validateWithCert(student, file, certFile, isTranscript) {
+  const errors = validate(student, file);
+  if (isTranscript && !certFile) {
+    errors.certFile = "Upload your certificate or statement of result.";
+  }
+  return errors;
+}
+
 export default function StudentForm({ onSuccess, onUpdateStudent, submissionCategory = "transcript" }) {
   const { user } = useStudentFlow();
   const { activeSessionCollection } = useSessionAccess();
   const toast = useToast();
   const receiptInputId = useId();
+  const certInputId = useId();
+
+  const isTranscript = submissionCategory !== "clearance";
 
   const [student, setStudent] = useState({ ...EMPTY_STUDENT, email: user?.email || "" });
   const [file, setFile] = useState(null);
+  const [certFile, setCertFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -121,14 +134,15 @@ export default function StudentForm({ onSuccess, onUpdateStudent, submissionCate
     });
   };
 
-  const reportChecklist = (next, currentFile) => {
-    if (onUpdateStudent) onUpdateStudent(checklistFromForm(next, currentFile));
+  const reportChecklist = (next, currentFile, currentCertFile) => {
+    if (onUpdateStudent)
+      onUpdateStudent(checklistFromForm(next, currentFile, currentCertFile ?? certFile, isTranscript));
   };
 
   const updateField = (field) => (e) => {
     const next = { ...student, [field]: e.target.value };
     setStudent(next);
-    reportChecklist(next, file);
+    reportChecklist(next, file, certFile);
     clearFieldError(field);
   };
 
@@ -139,23 +153,43 @@ export default function StudentForm({ onSuccess, onUpdateStudent, submissionCate
     // PDFs go through as-is; images are compressed hard (200KB / 1024px max).
     if (picked.type === "application/pdf") {
       setFile(picked);
-      reportChecklist(student, picked);
+      reportChecklist(student, picked, certFile);
       return;
     }
     try {
       const compressed = await imageCompression(picked, COMPRESSION_OPTIONS);
       setFile(compressed);
-      reportChecklist(student, compressed);
+      reportChecklist(student, compressed, certFile);
     } catch (err) {
       console.error("Compression error", err);
       setFile(picked);
-      reportChecklist(student, picked);
+      reportChecklist(student, picked, certFile);
+    }
+  };
+
+  const handleCertFileChange = async (e) => {
+    const picked = e.target.files && e.target.files[0];
+    if (!picked) return;
+    clearFieldError("certFile");
+    if (picked.type === "application/pdf") {
+      setCertFile(picked);
+      reportChecklist(student, file, picked);
+      return;
+    }
+    try {
+      const compressed = await imageCompression(picked, COMPRESSION_OPTIONS);
+      setCertFile(compressed);
+      reportChecklist(student, file, compressed);
+    } catch (err) {
+      console.error("Certificate compression error", err);
+      setCertFile(picked);
+      reportChecklist(student, file, picked);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const found = validate(student, file);
+    const found = validateWithCert(student, file, certFile, isTranscript);
     setErrors(found);
     if (Object.keys(found).length > 0) {
       toast.warning("Please complete all required fields before submitting.");
@@ -164,9 +198,19 @@ export default function StudentForm({ onSuccess, onUpdateStudent, submissionCate
     setSubmitting(true);
     try {
       if (!user) throw new Error("User is not authenticated.");
+
+      // Upload receipt
       const storageRef = ref(storage, `receipts/${user.uid}_${student.matricNo}`);
       await uploadBytes(storageRef, file);
       const receiptUrl = await getDownloadURL(storageRef);
+
+      // Upload certificate (transcript mode only)
+      let certificateUrl = null;
+      if (isTranscript && certFile) {
+        const certRef = ref(storage, `certificates/${user.uid}_${student.matricNo}`);
+        await uploadBytes(certRef, certFile);
+        certificateUrl = await getDownloadURL(certRef);
+      }
 
       const category = submissionCategory === "clearance" ? "clearance" : "transcript";
       await setDoc(doc(db, activeSessionCollection, `${user.uid}_${category}`), {
@@ -174,12 +218,13 @@ export default function StudentForm({ onSuccess, onUpdateStudent, submissionCate
         name: fullName,
         ...student,
         receiptUrl,
+        ...(certificateUrl ? { certificateUrl } : {}),
         status: "Pending Verification",
         createdAt: new Date().toISOString(),
         authUid: user.uid,
       });
 
-      reportChecklist(student, file);
+      reportChecklist(student, file, certFile);
       toast.success("Application submitted successfully.");
       if (onSuccess) onSuccess({ email: student.email, uid: user.uid });
     } catch (err) {
@@ -415,6 +460,35 @@ export default function StudentForm({ onSuccess, onUpdateStudent, submissionCate
         </div>
         {errors.file && <p className="field-error">{errors.file}</p>}
       </div>
+
+      {isTranscript && (
+        <div className="student-field student-field-full">
+          <label className="student-field-label">
+            Certificate / Statement of Result
+          </label>
+          <div className="receipt-dropzone">
+            <span className="receipt-dropzone-copy">
+              Upload an image or PDF of your certificate or statement of result.
+            </span>
+            <div className="receipt-file-row">
+              <input
+                id={certInputId}
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleCertFileChange}
+                className="receipt-hidden-input"
+              />
+              <label htmlFor={certInputId} className="receipt-pick-button">
+                Choose file
+              </label>
+              <span className="receipt-file-name">
+                {certFile ? certFile.name : "No file selected yet"}
+              </span>
+            </div>
+          </div>
+          {errors.certFile && <p className="field-error">{errors.certFile}</p>}
+        </div>
+      )}
 
       <div className="student-form-actions student-field-full">
         <button type="submit" className="btn-compact btn-compact-primary" disabled={submitting}>

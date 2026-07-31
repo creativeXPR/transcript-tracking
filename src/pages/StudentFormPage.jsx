@@ -76,6 +76,7 @@ export default function StudentFormPage() {
     programmeFilled: false,
     emailFilled: false,
     receiptFilled: false,
+    certificateFilled: false,
   });
 
   // Magic-link completion: if we've arrived from an email link, finish the
@@ -231,6 +232,11 @@ export default function StudentFormPage() {
                 <ChecklistItem done={checklist.receiptFilled} title="Receipt">
                   Image or PDF uploads are accepted.
                 </ChecklistItem>
+                {category !== "clearance" && (
+                  <ChecklistItem done={checklist.certificateFilled} title="Certificate / Statement of Result">
+                    Upload your certificate or statement of result.
+                  </ChecklistItem>
+                )}
               </div>
             </div>
           </aside>
